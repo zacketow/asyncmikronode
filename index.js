@@ -1,4 +1,4 @@
-const AsyncMikronode = require('./mikronode-tools/commandsMikrotik');
+const AsyncMikronode = require('./mikronode-tools/asyncMikrotik');
 (async () => {
     try {
         let MikronodeObject = await AsyncMikronode.rawCmd('/ip/route/print');
