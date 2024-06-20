@@ -1,7 +1,35 @@
 
 const MikroNode = require('./mikronode');
 const { DeviceConfig, AsyncMikronode } = require('./asyncMikronode')
-module.exports.addHotspotUser = async function  (user = '22572872'){
+var _ = require('lodash');
+module.exports.getHotspotUser = async function (barco = null) {
+        const Device = await DeviceConfig(barco);
+        let users = MikroNode.resultsToObj(await AsyncMikronode(Device, '/ip/hotspot/user/print'))
+        let isRegister = false;
+        let addResult = [];
+        let $indexkey = 1;
+        let $user = false;
+       
+        while(true){
+                if (_.isEmpty(users[$indexkey])) {
+                        Device.close()
+                        break;
+                }
+                if (_.isEmpty(users[$indexkey].comment.split('-')[4])) {
+                        
+                        $user = users[$indexkey]
+                        await AsyncMikronode(Device, '/ip/hotspot/user/set', { '.id': users[$indexkey]['.id'], 'comment': users[$indexkey].comment  + '-A'})
+                        Device.close()
+                        break;
+                } else {
+                        $indexkey++;
+                }
+        }
+        return $user;
+        
+        
+}
+module.exports.addHotspotUser = async function  (user = '22572872',barco = 'donnasib'){
         const Device = await DeviceConfig();
         let users = MikroNode.resultsToObj(await AsyncMikronode(Device, '/ip/hotspot/user/print'))
         let isRegister = false;
@@ -13,7 +41,7 @@ module.exports.addHotspotUser = async function  (user = '22572872'){
                 }       
         });
         if(!isRegister){
-                addResult = await AsyncMikronode(Device, '/ip/hotspot/user/add', { 'server': 'hotspot1', 'name': user, 'profile': 'aDevice', 'limit-bytes-in': '2097152' })
+                addResult = await AsyncMikronode(Device, '/ip/hotspot/user/add', { 'server': 'hotspot1', 'name': user, 'profile': 'default', 'limit-bytes-total': '2097152', 'email':barco+'@gcnv.com.ve' })
         }
         Device.close()    
         return addResult[0].replace('*','');
@@ -63,6 +91,6 @@ module.exports.rawCmd = async function (Cmd,Args = {}) {
         return result;
 }
 module.exports.rawToObject = function (obj) {
-       let result =  MikroNode.resultsToObj(obj);
-       return result;
+        let result =  MikroNode.resultsToObj(obj);
+        return result;
 }
